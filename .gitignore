@@ -2,3 +2,4 @@
 **/.vs
 *.vcxproj*
 **/OpenGLCourseApp/Debug
+*.sln
