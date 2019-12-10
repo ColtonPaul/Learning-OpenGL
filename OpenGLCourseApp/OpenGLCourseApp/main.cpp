@@ -18,7 +18,9 @@ GLuint uniformModel;
 bool direction = true; //true for right, false for left
 float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
-float triIncrement = 0.005f;
+float triIncrement = 0.0005f;
+
+float curAngle = 0.0f;
 
 //TODO: These shaders should be defined in external files
 //Vertex Shader
@@ -46,6 +48,14 @@ void main()                                                         \n\
      colour = vec4(1.0, 0.0, 0.0, 1.0); //rgb values                \n\
 }                                                                   \n\
 ";
+
+float toRadians(float input)
+{
+    const float pi = 3.14159265f;
+    const float conversionFactor = pi / 180.0f;
+
+    return input * conversionFactor;
+}
 
 void createTriangle()
 {
@@ -208,6 +218,12 @@ int main()
             direction = !direction;
         }
 
+        curAngle += 0.01f;
+        if (curAngle >= 360)
+        {
+            curAngle -= 360; //not really necessary, but we don't want an overflow.
+        }
+
         //Clears window
         glClearColor(0.0, 0.0, 0.0, 1); //passed rgb values between 0 and 1
         glClear(GL_COLOR_BUFFER_BIT);
@@ -215,7 +231,10 @@ int main()
         glUseProgram(shaderProgram);
 
         glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(triOffset, triOffset, 0.0f));
+        glm::vec3 zAxisVector(0.0f, 0.0f, 1.0f); //Here, only the direction matters, not the length
+        model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+        model = glm::rotate(model, toRadians(curAngle), zAxisVector);
+
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
 
         glBindVertexArray(VAO);
