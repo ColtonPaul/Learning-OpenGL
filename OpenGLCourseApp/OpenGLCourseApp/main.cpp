@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdlib>
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +10,12 @@ const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
 
 GLuint VAO, VBO, shaderProgram;
+GLuint uniformXMove;
+
+bool direction = true; //true for right, false for left
+float triOffset = 0.0f;
+float triMaxOffset = 0.7f;
+float triIncrement = 0.005f;
 
 //TODO: These shaders should be defined in external files
 //Vertex Shader
@@ -17,9 +24,12 @@ static const char* vShader = "                                      \n\
                                                                     \n\
 layout (location = 0) in vec3 pos;                                  \n\
                                                                     \n\
+uniform float xMove;                                                \n\
+                                                                    \n\
+                                                                    \n\
 void main()                                                         \n\
 {                                                                   \n\
-     gl_Position = vec4(.4 * pos.x, .4 * pos.y, pos.z, 1.0);        \n\
+     gl_Position = vec4(.4 * pos.x + xMove, .4 * pos.y, pos.z, 1.0);        \n\
 }                                                                   \n\
 ";
 
@@ -118,6 +128,8 @@ void compileShaders()
         printf("Error validating program: %s \n", eLog);
         return;
     }
+
+    uniformXMove = glGetUniformLocation(shaderProgram, "xMove"); //will take the compiled shader and return the location of the var 'xMove'
 }
 
 int main()
@@ -180,11 +192,28 @@ int main()
         //Handle user input events
         glfwPollEvents(); //checks for any user events
 
+        if (direction) //if heading to the right
+        {
+            triOffset += triIncrement;
+        }
+        else //if heading to the left
+        {
+            triOffset -= triIncrement;
+        }
+
+        if (abs(triOffset) >= triMaxOffset)
+        {
+            direction = !direction;
+        }
+
         //Clears window
         glClearColor(0.0, 0.0, 0.0, 1); //passed rgb values between 0 and 1
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
+
+        glUniform1f(uniformXMove, triOffset);
+
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
