@@ -11,20 +11,18 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Mesh.h"
+#include "Shader.h"
 
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
 
 std::vector<Mesh*> meshList;
-
-GLuint shaderProgram;
-GLuint uniformModel;
-GLuint uniformProjection;
+std::vector<Shader> shaderList;
 
 bool direction = true; //true for right, false for left
 float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
-float triIncrement = 0.0005f;
+float triIncrement = 0.005f;
 
 float curAngle = 0.0f;
 
@@ -74,7 +72,7 @@ float toRadians(float input)
     return input * conversionFactor;
 }
 
-void createTetrahedron()
+void createObjects()
 {
 
     unsigned int indices[] =
@@ -102,69 +100,11 @@ void createTetrahedron()
     meshList.push_back(secondTetrahedron);
 }
 
-void AddShader(GLuint program, const char* shaderCode, GLenum shaderType)
+void createShaders()
 {
-    GLuint theShader = glCreateShader(shaderType); //creates an empty shader of the type shaderType
-
-    const GLchar* theCode[1]; //an array of a single GLchar*
-    theCode[0] = shaderCode;
-
-    GLint codeLength[1];
-    codeLength[0] = strlen(shaderCode);
-
-    glShaderSource(theShader, 1, theCode, codeLength); //Will modify the actual source of the shader to equal the code we wrote
-    glCompileShader(theShader);
-
-    GLint result = 0;
-    GLchar eLog[1024] = { 0 }; //a place to log the error
-
-    glGetShaderiv(theShader, GL_COMPILE_STATUS, &result); //TODO duplicated code
-    if (!result)
-    {
-        glGetShaderInfoLog(theShader, sizeof(eLog), NULL, eLog);
-        printf("Error compiling the %d shader: %s \n", shaderType, eLog);
-        return;
-    }
-
-    glAttachShader(program, theShader);
-}
-
-void compileShaders()
-{
-    shaderProgram = glCreateProgram(); //create the shader program and return the ID
-
-    if (!shaderProgram)
-    {
-        printf("Error creating shader program");
-        return;
-    }
-
-    AddShader(shaderProgram, vShader, GL_VERTEX_SHADER);
-    AddShader(shaderProgram, fShader, GL_FRAGMENT_SHADER);
-
-    GLint result = 0;
-    GLchar eLog[1024] = { 0 }; //a place to log the error
-
-    glLinkProgram(shaderProgram); //creates the executables on the graphics card and links it together
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &result);
-    if (!result)
-    {
-        glGetProgramInfoLog(shaderProgram, sizeof(eLog), NULL, eLog);
-        printf("Error linking program: %s \n", eLog);
-        return;
-    }
-
-    glValidateProgram(shaderProgram); //checks if the shader is valid for the OpenGL context 
-    glGetProgramiv(shaderProgram, GL_VALIDATE_STATUS, &result);
-    if (!result)
-    {
-        glGetProgramInfoLog(shaderProgram, sizeof(eLog), NULL, eLog);
-        printf("Error validating program: %s \n", eLog);
-        return;
-    }
-
-    uniformModel = glGetUniformLocation(shaderProgram, "model"); //will take the compiled shader and return the location of the var 'model'
-    uniformProjection = glGetUniformLocation(shaderProgram, "projection");
+    Shader * shader1 = new Shader();
+    shader1->createFromString(vShader, fShader);
+    shaderList.push_back(*shader1);
 }
 
 int main()
@@ -221,9 +161,10 @@ int main()
     //Set up viewport size (Sets up what part we're drawing to on our window)
     glViewport(0, 0, bufferWidth, bufferHeight); //why buffer dims instead of WIDTH, HEIGHT?
 
-    createTetrahedron();
-    compileShaders();
+    createObjects();
+    createShaders();
 
+    GLuint uniformProjection = 0, uniformModel = 0;
     glm::mat4 projection = glm::perspective(45.0f, (GLfloat)bufferWidth / (GLfloat)bufferHeight, 0.1f, 100.0f);
 
     while (!glfwWindowShouldClose(mainWindow))
@@ -268,8 +209,9 @@ int main()
         glClearColor(0.0, 0.0, 0.0, 1); //passed rgb values between 0 and 1
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clears both the color buffer bit and the depth buffer bit
 
-        glUseProgram(shaderProgram);
-
+        shaderList[0].useShader();
+        uniformModel = shaderList[0].getModelLocation();
+        uniformProjection = shaderList[0].getProjectionLocation();
         glm::mat4 model(1.0f);
         glm::vec3 zAxisVector(0.0f, 0.0f, 1.0f); //Here, only the direction matters, not the length
         glm::vec3 yAxisVector(0.0f, 1.0f, 0.0f);
