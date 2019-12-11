@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -9,11 +10,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Mesh.h"
+
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
 
-GLuint VAO, VBO, shaderProgram;
-GLuint IBO; //Index Buffer Object
+std::vector<Mesh*> meshList;
+
+GLuint shaderProgram;
 GLuint uniformModel;
 GLuint uniformProjection;
 
@@ -89,23 +93,13 @@ void createTetrahedron()
         0.0f, 1.0f, 0.0f
     };
 
-    glGenVertexArrays(1, &VAO); //we want to create 1 array and store it in the ID VAO
-    glBindVertexArray(VAO);
+    Mesh* tetrahedron = new Mesh();
+    tetrahedron->createMesh(vertices, indices, 12, 12);
+    meshList.push_back(tetrahedron);
 
-    glGenBuffers(1, &IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &VBO); //create 1 buffer object (inside the bound VAO) and give it the ID VBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind buffer VBO
-    glBindVertexArray(0); //unbind array VAO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); //unbind the IBO
+    Mesh* secondTetrahedron = new Mesh();
+    secondTetrahedron->createMesh(vertices, indices, 12, 12);
+    meshList.push_back(secondTetrahedron);
 }
 
 void AddShader(GLuint program, const char* shaderCode, GLenum shaderType)
@@ -279,20 +273,20 @@ int main()
         glm::mat4 model(1.0f);
         glm::vec3 zAxisVector(0.0f, 0.0f, 1.0f); //Here, only the direction matters, not the length
         glm::vec3 yAxisVector(0.0f, 1.0f, 0.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
-        model = glm::rotate(model, toRadians(curAngle), yAxisVector);
+        model = glm::translate(model, glm::vec3(triOffset, 0.0f, -2.5f));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f)); //scale in the x axis and y axis by .4
-
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection)); //binds the value of model to the model in the shader
+        meshList[0]->renderMesh();
 
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0); //similar to DrawArrays, except now we're drawing it by the element ids instead of the vertices
-        glBindVertexArray(0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-triOffset, 1.0f, -2.5f));
+        model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f)); //scale in the x axis and y axis by .4
+        glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
+        meshList[1]->renderMesh();
+
+
         glUseProgram(0); //unassign shader program
-
         //You have two scenes going on at once, one that can be seen, and one that you're drawing to
         glfwSwapBuffers(mainWindow);
     }
