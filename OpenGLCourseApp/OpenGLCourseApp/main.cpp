@@ -13,6 +13,7 @@ const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
 
 GLuint VAO, VBO, shaderProgram;
+GLuint IBO; //Index Buffer Object
 GLuint uniformModel;
 
 bool direction = true; //true for right, false for left
@@ -67,17 +68,31 @@ float toRadians(float input)
     return input * conversionFactor;
 }
 
-void createTriangle()
+void createTetrahedron()
 {
+
+    unsigned int indices[] =
+    {
+        0, 3, 1,
+        1, 3, 2,
+        2, 3, 0,
+        0, 1, 2
+    };
+
     GLfloat vertices[] =
     {
         -1.0f, -1.0f, 0.0f,
+        0.0f, -1.0f, 1.0f,
         1.0f, -1.0f, 0.0f,
         0.0f, 1.0f, 0.0f
     };
 
     glGenVertexArrays(1, &VAO); //we want to create 1 array and store it in the ID VAO
     glBindVertexArray(VAO);
+
+    glGenBuffers(1, &IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &VBO); //create 1 buffer object (inside the bound VAO) and give it the ID VBO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -88,6 +103,7 @@ void createTriangle()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); //unbind buffer VBO
     glBindVertexArray(0); //unbind array VAO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); //unbind the IBO
 }
 
 void AddShader(GLuint program, const char* shaderCode, GLenum shaderType)
@@ -206,7 +222,7 @@ int main()
     //Set up viewport size (Sets up what part we're drawing to on our window)
     glViewport(0, 0, bufferWidth, bufferHeight); //why buffer dims instead of WIDTH, HEIGHT?
 
-    createTriangle();
+    createTetrahedron();
     compileShaders();
 
     while (!glfwWindowShouldClose(mainWindow))
@@ -228,7 +244,7 @@ int main()
             direction = !direction;
         }
 
-        curAngle += 0.01f;
+        curAngle += 0.1f;
         if (curAngle >= 360)
         {
             curAngle -= 360; //not really necessary, but we don't want an overflow.
@@ -255,15 +271,18 @@ int main()
 
         glm::mat4 model(1.0f);
         glm::vec3 zAxisVector(0.0f, 0.0f, 1.0f); //Here, only the direction matters, not the length
+        glm::vec3 yAxisVector(0.0f, 1.0f, 0.0f);
         //model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
-        //model = glm::rotate(model, toRadians(curAngle), zAxisVector);
+        model = glm::rotate(model, toRadians(curAngle), yAxisVector);
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f)); //scale in the x axis and y axis by .4
 
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0); //similar to DrawArrays, except now we're drawing it by the element ids instead of the vertices
         glBindVertexArray(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glUseProgram(0); //unassign shader program
 
         //You have two scenes going on at once, one that can be seen, and one that you're drawing to
