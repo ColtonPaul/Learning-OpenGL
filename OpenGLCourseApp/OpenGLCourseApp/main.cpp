@@ -192,7 +192,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     //Create the window
-    GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "My Window Title", NULL, NULL);
+    GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Spinning 3D Tetrahedron", NULL, NULL);
     if (!mainWindow)
     {
         printf("GLFW window creation failed");
@@ -218,6 +218,8 @@ int main()
         glfwTerminate();
         return EXIT_FAILURE;
     }
+
+    glEnable(GL_DEPTH_TEST); //enables depth testing to determine which triangles are deeper in the image -- which triangles should be drawn on top
 
     //Set up viewport size (Sets up what part we're drawing to on our window)
     glViewport(0, 0, bufferWidth, bufferHeight); //why buffer dims instead of WIDTH, HEIGHT?
@@ -265,7 +267,7 @@ int main()
 
         //Clears window
         glClearColor(0.0, 0.0, 0.0, 1); //passed rgb values between 0 and 1
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clears both the color buffer bit and the depth buffer bit
 
         glUseProgram(shaderProgram);
 
