@@ -33,36 +33,10 @@ float minSize = 0.1f;
 
 //TODO: These shaders should be defined in external files
 //Vertex Shader
-static const char* vShader = "                                              \n\
-#version 330                                                                \n\
-                                                                            \n\
-layout (location = 0) in vec3 pos;                                          \n\
-                                                                            \n\
-uniform mat4 model;                                                         \n\
-uniform mat4 projection;                                                    \n\
-                                                                            \n\
-out vec4 vCol; //vertex color                                               \n\
-                                                                            \n\
-void main()                                                                 \n\
-{                                                                           \n\
-     gl_Position = projection * model * vec4(pos, 1.0);                     \n\
-     vCol = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);   //make the color equal to whatever the position is                           \n\
-}                                                                           \n\
-";
+static const char* vShader = "Shaders/shader.vert";
 
 //Fragment Shader
-static const char* fShader = "                                      \n\
-#version 330                                                        \n\
-                                                                    \n\
-out vec4 colour;                                                    \n\
-                                                                    \n\
-in vec4 vCol; //will get passed in from the vertex shader           \n\
-                                                                    \n\
-void main()                                                         \n\
-{                                                                   \n\
-     colour = vCol; //rgb values                                    \n\
-}                                                                   \n\
-";
+static const char* fShader = "Shaders/shader.frag";
 
 float toRadians(float input)
 {
@@ -103,7 +77,7 @@ void createObjects()
 void createShaders()
 {
     Shader * shader1 = new Shader();
-    shader1->createFromString(vShader, fShader);
+    shader1->createFromFiles(vShader, fShader);
     shaderList.push_back(*shader1);
 }
 
@@ -113,7 +87,7 @@ int main()
     if (!glfwInit())
     {
         //handle init failing
-        printf("GLFW init failed");
+        printf("GLFW init failed\n");
         glfwTerminate();
         return EXIT_FAILURE;
     }
@@ -132,7 +106,7 @@ int main()
     GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Spinning 3D Tetrahedron", NULL, NULL);
     if (!mainWindow)
     {
-        printf("GLFW window creation failed");
+        printf("GLFW window creation failed\n");
         glfwTerminate();
         return EXIT_FAILURE;
     }
@@ -150,7 +124,7 @@ int main()
 
     if (GLEW_OK != glewInit())
     {
-        printf("Glew init failed");
+        printf("Glew init failed\n");
         glfwDestroyWindow(mainWindow);
         glfwTerminate();
         return EXIT_FAILURE;

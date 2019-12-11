@@ -17,6 +17,17 @@ void Shader::createFromString(const char* vertexCode, const char* fragmentCode)
     compileShader(vertexCode, fragmentCode);
 }
 
+void Shader::createFromFiles(const char * vertexLocation, const char * fragmentLocation)
+{
+    std::string vertexCodeString = this->readFile(vertexLocation);
+    std::string fragmentCodeString = this->readFile(fragmentLocation);
+
+    const char* vertexCode = vertexCodeString.c_str();
+    const char* fragmentCode = fragmentCodeString.c_str();
+
+    compileShader(vertexCode, fragmentCode);
+}
+
 GLuint Shader::getProjectionLocation()
 {
     return uniformProjection;
@@ -49,7 +60,7 @@ void Shader::compileShader(const char * vertexCode, const char * fragmentCode)
 
     if (!shaderID)
     {
-        printf("Error creating shader program");
+        printf("Error creating shader program \n");
         return;
     }
 
@@ -106,4 +117,26 @@ void Shader::addShader(GLuint program, const char * shaderCode, GLenum shaderTyp
     }
 
     glAttachShader(program, theShader);
+}
+
+std::string Shader::readFile(const char * fileLocation)
+{
+    std::string content;
+    std::ifstream fileStream(fileLocation, std::ios::in);
+
+    if (!fileStream.is_open())
+    {
+        printf("Failed to read %s! File doesn't exist \n", fileLocation);
+        return "";
+    }
+    
+    std::string line = "";
+    while (!fileStream.eof())
+    {
+        std::getline(fileStream, line);
+        content.append(line + "\n");
+    }
+
+    fileStream.close();
+    return content;
 }
