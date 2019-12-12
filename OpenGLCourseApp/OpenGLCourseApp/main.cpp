@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Camera.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Window.h"
@@ -18,6 +19,7 @@ Window mainWindow;
 
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
+Camera camera;
 
 //Vertex Shader
 static const char* vShader = "Shaders/shader.vert";
@@ -75,14 +77,18 @@ int main()
     createObjects();
     createShaders();
 
-    GLuint uniformProjection = 0, uniformModel = 0;
+    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 0.05f, 1.0f);
+
+    GLuint uniformProjection = 0;
+    GLuint uniformModel = 0;
+    GLuint uniformView = 0;
     glm::mat4 projection = glm::perspective(45.0f, (GLfloat)(mainWindow.getBufferWidth() / mainWindow.getBufferHeight()), 0.1f, 100.0f);
 
     while (!mainWindow.shouldClose())
     {
         //Handle user input events
         glfwPollEvents();
-
+        camera.keyControl(mainWindow.getKeys());
         //Clears window
         glClearColor(0.0, 0.0, 0.0, 1); //passed rgb values between 0 and 1
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clears both the color buffer bit and the depth buffer bit
@@ -90,13 +96,15 @@ int main()
         shaderList[0].useShader();
         uniformModel = shaderList[0].getModelLocation();
         uniformProjection = shaderList[0].getProjectionLocation();
+        uniformView = shaderList[0].getViewLocation();
         glm::mat4 model(1.0f);
         glm::vec3 zAxisVector(0.0f, 0.0f, 1.0f); //Here, only the direction matters, not the length
         glm::vec3 yAxisVector(0.0f, 1.0f, 0.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f)); //scale in the x axis and y axis by .4
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
-        glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection)); //binds the value of model to the model in the shader
+        glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
         meshList[0]->renderMesh();
 
         model = glm::mat4(1.0f);
