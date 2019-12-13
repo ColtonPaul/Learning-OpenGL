@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <cmath>
 #include <cstdlib>
 #include <stdio.h>
@@ -13,6 +15,7 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "Shader.h"
+#include "Texture.h"
 #include "Window.h"
 
 Window mainWindow;
@@ -20,6 +23,9 @@ Window mainWindow;
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
 Camera camera;
+
+Texture brickTexture;
+Texture dirtTexture;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -49,20 +55,23 @@ void createObjects()
         0, 1, 2
     };
 
+    // The texture on the bottom of the tetrahedron looks bad because "the texture wasn't designed for this"; it essentially takes
+    // a single row of pixels on the bottom of the picture and stretches it out of the entire bottom face.
     GLfloat vertices[] =
     {
-        -1.0f, -1.0f, 0.0f,
-        0.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f
+        //x     y      z        u       v
+        -1.0f, -1.0f, 0.0f,     0.0f, 0.0f,
+        0.0f, -1.0f, 1.0f,      0.5f, 0.0f,
+        1.0f, -1.0f, 0.0f,      1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f ,      0.5f, 1.0f
     };
 
     Mesh* tetrahedron = new Mesh();
-    tetrahedron->createMesh(vertices, indices, 12, 12);
+    tetrahedron->createMesh(vertices, indices, 20, 12); //20 data points, still 12 indices
     meshList.push_back(tetrahedron);
 
     Mesh* secondTetrahedron = new Mesh();
-    secondTetrahedron->createMesh(vertices, indices, 12, 12);
+    secondTetrahedron->createMesh(vertices, indices, 20, 12);
     meshList.push_back(secondTetrahedron);
 }
 
@@ -80,7 +89,12 @@ int main()
     createObjects();
     createShaders();
 
-    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
+    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.25f);
+
+    brickTexture = Texture("Textures/brick.png");
+    brickTexture.loadTexture();
+    dirtTexture = Texture("Textures/dirt.png");
+    dirtTexture.loadTexture();
 
     GLuint uniformProjection = 0;
     GLuint uniformModel = 0;
@@ -113,12 +127,18 @@ int main()
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
         glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
+
+        brickTexture.useTexture(); //Now anything that's drawn will use this texture.
+
         meshList[0]->renderMesh();
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 1.0f, -2.5f));
         model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f)); //scale in the x axis and y axis by .4
         glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model)); //binds the value of model to the model in the shader
+
+        dirtTexture.useTexture();
+
         meshList[1]->renderMesh();
 
 
