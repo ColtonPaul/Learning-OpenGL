@@ -40,6 +40,26 @@ void Camera::keyControl(bool * keys, GLfloat deltaTime)
     }
 }
 
+void Camera::mouseControl(GLfloat xChange, GLfloat yChange)
+{
+    xChange *= turnSpeed;
+    yChange *= turnSpeed;
+    yaw += xChange;
+    pitch += yChange;
+
+    if (pitch > 89.0f) //TODO-CJP: research why we need this restriction
+    {
+        pitch = 89.0f;
+    }
+
+    if (pitch < -89.0f)
+    {
+        pitch = -89.0f;
+    }
+
+    this->update();
+}
+
 glm::mat4 Camera::calculateViewMatrix()
 {
     return glm::lookAt(position, position + front, up);

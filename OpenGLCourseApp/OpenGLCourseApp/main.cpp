@@ -80,7 +80,7 @@ int main()
     createObjects();
     createShaders();
 
-    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 1.0f);
+    camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 5.0f, 0.5f);
 
     GLuint uniformProjection = 0;
     GLuint uniformModel = 0;
@@ -96,6 +96,7 @@ int main()
         //Handle user input events
         glfwPollEvents();
         camera.keyControl(mainWindow.getKeys(), deltaTime);
+        camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());
         //Clears window
         glClearColor(0.0, 0.0, 0.0, 1); //passed rgb values between 0 and 1
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clears both the color buffer bit and the depth buffer bit
