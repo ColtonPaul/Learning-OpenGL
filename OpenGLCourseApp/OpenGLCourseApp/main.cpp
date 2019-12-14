@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Camera.h"
+#include "Light.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -26,6 +27,8 @@ Camera camera;
 
 Texture brickTexture;
 Texture dirtTexture;
+
+Light mainLight;
 
 GLfloat deltaTime = 0.0f;
 GLfloat lastTime = 0.0f;
@@ -96,9 +99,13 @@ int main()
     dirtTexture = Texture("Textures/dirt.png");
     dirtTexture.loadTexture();
 
+    mainLight = Light(1.0f, 1.0f, 1.0f, 0.2f);
+
     GLuint uniformProjection = 0;
     GLuint uniformModel = 0;
     GLuint uniformView = 0;
+    GLuint uniformAmbientIntensity = 0;
+    GLuint uniformAmbientColor = 0;
     glm::mat4 projection = glm::perspective(45.0f, (GLfloat)(mainWindow.getBufferWidth() / mainWindow.getBufferHeight()), 0.1f, 100.0f);
 
     while (!mainWindow.shouldClose())
@@ -119,6 +126,11 @@ int main()
         uniformModel = shaderList[0].getModelLocation();
         uniformProjection = shaderList[0].getProjectionLocation();
         uniformView = shaderList[0].getViewLocation();
+        uniformAmbientColor = shaderList[0].getAmbientColorLocation();
+        uniformAmbientIntensity = shaderList[0].getAmbientIntensityLocation();
+
+        mainLight.useLight(uniformAmbientIntensity, uniformAmbientColor);
+
         glm::mat4 model(1.0f);
         glm::vec3 zAxisVector(0.0f, 0.0f, 1.0f); //Here, only the direction matters, not the length
         glm::vec3 yAxisVector(0.0f, 1.0f, 0.0f);
